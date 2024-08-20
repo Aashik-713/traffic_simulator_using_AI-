@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 from collections import defaultdict
 from PIL import Image
-import numpy as np
+import numpy as np  
 import cv2
 
 temp = pathlib.PosixPath
@@ -21,7 +21,19 @@ def points(img):
                 class_counts[class_name] += 1
         return dict(class_counts)
 
-    excluded_classes = [1, 2]  
+    excluded_classes = [1, 2]
+
+    try:
+        img = Image.open(img).convert('RGB')
+        img = np.array(img)  
+    except Exception as e:
+        print(f"Error loading image: {e}")
+        return 0
+
+    if img.shape[-1] == 4:
+        img = img[..., :3]
+
+    img = img[:, :, ::-1]
 
     results = model(img, size=640)
     results.print()
@@ -29,13 +41,13 @@ def points(img):
     class_counts = extract_class_counts(results)
 
     points = {
-        'Car': 2.5,
+        'Car': 3,
         'Two Wheeler': 1,
-        'Auto': 1.5,
-        'Bus': 4,
-        'Truck': 4
+        'Auto': 2,
+        'Bus': 5,
+        'Truck': 5
     }
-
+    
     total_points = sum(class_counts.get(cls, 0) * points.get(cls, 0) for cls in class_counts)
 
     return total_points
